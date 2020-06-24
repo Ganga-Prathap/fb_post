@@ -27,6 +27,11 @@ class TestCase01CommentRepliesAPITestCase(CustomAPITestCase):
     url_suffix = URL_SUFFIX
     test_case_dict = TEST_CASE
 
+    def setupUser(self, username, password):
+        super(TestCase01CommentRepliesAPITestCase, self).setupUser(
+            username=username, password=password
+        )
+
     def test_case(self):
         self.default_test_case() # Returns response object.
         # Which can be used for further response object checks.

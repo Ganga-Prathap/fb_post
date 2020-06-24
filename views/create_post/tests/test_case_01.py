@@ -35,6 +35,20 @@ class TestCase01CreatePostAPITestCase(CustomAPITestCase):
         )
 
     def test_case(self):
-        self.default_test_case() # Returns response object.
-        # Which can be used for further response object checks.
-        # Add database state checks here.
+        response = self.default_test_case() 
+
+        import json
+        from fb_post.models.post import Post
+
+        response_content = json.loads(response.content)
+        post_id = response_content['post_id']
+        post = Post.objects.select_related('posted_by').get(id=post_id)
+
+        self.assert_match_snapshot(
+            name='user_id',
+            value=post.posted_by_id
+        )
+        self.assert_match_snapshot(
+            name='post_content',
+            value=post.content
+        )

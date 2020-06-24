@@ -10,6 +10,7 @@ class UserFactory(factory.django.DjangoModelFactory):
         model = User
 
     name = factory.Sequence(lambda n: 'name%d' % n)
+    username = factory.Sequence(lambda n: 'user%d' % n)
     profile_pic = factory.Sequence(lambda n: 'https://profile%d' % n)
 
 
