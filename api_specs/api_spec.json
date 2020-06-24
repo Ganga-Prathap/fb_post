@@ -1,0 +1,805 @@
+{
+    "swagger": "2.0",
+    "host": "localhost:8000",
+    "basePath": "/fb_post/",
+    "info": {
+        "version": "1.0.0",
+        "title": "Simple API",
+        "description": "A simple API to learn how to write OpenAPI Specification"
+    },
+    "schemes": [
+        "https",
+        "http"
+    ],
+    "consumes": [
+        "application/json"
+    ],
+    "produces": [
+        "application/json"
+    ],
+    "securityDefinitions": {
+        "oauth": {
+            "tokenUrl": "http://auth.ibtspl.com/oauth2/",
+            "flow": "password",
+            "scopes": {
+                "read": "read users",
+                "write": "create users",
+                "update": "update users",
+                "delete": "delete users",
+                "superuser": "super user permission"
+            },
+            "type": "oauth2"
+        }
+    },
+
+    "definitions": {
+
+        "User": {
+            "type": "object",
+            "properties": {
+                "user_id": {
+                    "type": "integer",
+                    "format": "int64"
+                },
+                "name": {
+                    "type": "string"
+                },
+                "profile_pic": {
+                    "type": "string"
+                }
+            },
+            "required": [
+                "user_id",
+                "name",
+                "profile_pic"
+            ]
+        },
+
+        "UserReaction": {
+            "allOf": [{
+                    "$ref": "#/definitions/User"
+                },
+                {
+                    "type": "object",
+                    "properties": {
+                        "reaction": {
+                            "type": "string",
+                            "enum": [
+                                "WOW", "LIT",
+                                "LOVE", "HAHA",
+                                "THUMBS-UP", "THUMBS-DOWN",
+                                "ANGRY", "SAD"
+                            ]
+                        }
+                    },
+                    "required": [
+                        "reaction"
+                    ]
+                }
+            ]
+        },
+
+        "Reactions": {
+            "type": "object",
+            "properties": {
+                "count": {
+                    "type": "integer",
+                    "format": "int64"
+                },
+                "type": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                }
+            },
+            "required": [
+                "count",
+                "type"
+            ]
+        },
+
+        "Comment": {
+            "type": "object",
+            "properties": {
+                "comment_id": {
+                    "type": "integer",
+                    "format": "int64"
+                },
+                "commenter": {
+                    "$ref": "#/definitions/User"
+                },
+                "commented_at": {
+                    "type": "string",
+                    "format": "datetime"
+                },
+                "comment_content": {
+                    "type": "string"
+                }
+            },
+            "required": [
+                "comment_id",
+                "commenter",
+                "commented_at",
+                "comment_content"
+            ]
+        },
+
+        "ReplyComment": {
+            "allOf": [{
+                    "$ref": "#/definitions/Comment"
+                },
+                {
+                    "type": "object",
+                    "properties": {
+                        "reactions": {
+                            "$ref": "#/definitions/Reactions"
+                        }
+                    },
+                    "required": [
+                        "reactions"
+                    ]
+                }
+            ]
+        },
+
+        "Comments": {
+            "allOf": [{
+                    "$ref": "#/definitions/Comment"
+                },
+                {
+                    "type": "object",
+                    "properties": {
+                        "reactions": {
+                            "$ref": "#/definitions/Reactions"
+                        },
+                        "replies_count": {
+                            "type": "integer",
+                            "format": "int64"
+                        },
+                        "replies": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/ReplyComment"
+                            }
+                        }
+                    },
+                    "required": [
+                        "reactions",
+                        "replies_count",
+                        "replies"
+                    ]
+                }
+            ]
+        },
+
+        "Post": {
+            "type": "object",
+            "properties": {
+                "post_id": {
+                    "type": "integer",
+                    "format": "int64"
+                },
+                "posted_by": {
+                    "$ref": "#/definitions/User"
+                },
+                "posted_at": {
+                    "type": "string",
+                    "format": "datetime"
+                },
+                "post_content": {
+                    "type": "string"
+                },
+                "reactions": {
+                    "$ref": "#/definitions/Reactions"
+                },
+                "comments": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/Comments"
+                    }
+                },
+                "comments_count": {
+                    "type": "integer",
+                    "format": "int64"
+                }
+            },
+            "required": [
+                "post_id",
+                "posted_by",
+                "posted_at",
+                "post_content",
+                "reactions",
+                "comments",
+                "comments_count"
+            ]
+        }
+    },
+
+    "parameters": {
+
+        "CreatePostParameter": {
+            "name": "post",
+            "in": "body",
+            "required": true,
+            "description": "create a post",
+            "schema": {
+                "type": "object",
+                "properties": {
+                    "content": {
+                        "type": "string"
+                    }
+                },
+                "required": [
+                    "content"
+                ]
+            }
+        },
+
+        "PostIdParameter": {
+            "name": "post_id",
+            "in": "path",
+            "required": true,
+            "description": "The post's id",
+            "type": "integer",
+            "format": "int64"
+        },
+
+        "CommentIdParameter": {
+            "name": "comment_id",
+            "in": "path",
+            "required": true,
+            "description": "The comment's id",
+            "type": "integer",
+            "format": "int64"
+        },
+
+        "OffsetParameter": {
+            "name": "offset",
+            "in": "query",
+            "description": "Some description for offset",
+            "type": "integer",
+            "format": "int64"
+        },
+
+        "LimitParameter": {
+            "name": "limit",
+            "in": "query",
+            "description": "Some description for limit",
+            "type": "integer",
+            "format": "int64"
+        },
+
+        "CreateReactionParameter": {
+            "name": "post",
+            "in": "body",
+            "required": true,
+            "description": "create a reaction",
+            "schema": {
+                "type": "object",
+                "properties": {
+                    "reaction_type": {
+                        "type": "string",
+                        "enum": [
+                            "WOW", "LIT",
+                            "LOVE", "HAHA",
+                            "THUMBS-UP", "THUMBS-DOWN",
+                            "ANGRY", "SAD"
+                        ]
+                    }
+                },
+                "required": [
+                    "reaction_type"
+                ]
+            }
+        }
+
+    },
+
+    "responses": {
+
+        "CreatePostResponse": {
+            "description": "Success Response",
+            "schema": {
+                "type": "object",
+                "properties": {
+                    "post_id": {
+                        "type": "integer",
+                        "format": "int64"
+                    }
+                },
+                "required": [
+                    "post_id"
+                ]
+            }
+        },
+
+        "CreateCommentResponse": {
+            "description": "Success Response",
+            "schema": {
+                "type": "object",
+                "properties": {
+                    "comment_id": {
+                        "type": "integer",
+                        "format": "int64"
+                    }
+                },
+                "required": [
+                    "comment_id"
+                ]
+            }
+        },
+
+        "InvalidPostContent": {
+            "description": "InvalidPostContent"
+        },
+
+        "InvalidCommentContent": {
+            "description": "InvalidCommentContent"
+        },
+
+        "InvalidReplyContent": {
+            "description": "InvalidReplyContent"
+        },
+
+        "InvalidReactionType": {
+            "description": "InvalidReactionType"
+        },
+
+        "InvalidPostId": {
+            "description": "InvalidPostId"
+        },
+
+        "InvalidCommentId": {
+            "description": "InvalidCommentId"
+        },
+
+        "UnauthorizedUser": {
+            "description": "UnauthorizedUser"
+        },
+
+        "PostDetailResponse": {
+            "description": "Success Response",
+            "schema": {
+                "$ref": "#/definitions/Post"
+            }
+        },
+
+        "UserPostDetailResponse": {
+            "description": "Success Response",
+            "schema": {
+                "type": "array",
+                "items": {
+                    "$ref": "#/definitions/Post"
+                }
+            }
+        },
+
+        "PostIdsResponse": {
+            "description": "Success Response",
+            "schema": {
+                "type": "array",
+                "items": {
+                    "type": "integer",
+                    "format": "int64"
+                }
+            }
+        },
+
+        "ReactionsCountResponse": {
+            "description": "Success Response",
+            "schema": {
+                "type": "object",
+                "properties": {
+                    "count": {
+                        "type": "integer",
+                        "format": "int64"
+                    }
+                },
+                "required": [
+                    "count"
+                ]
+            }
+        },
+
+        "ReactionMetricsResponse": {
+            "description": "Success Response",
+            "schema": {
+                "type": "object",
+                "properties": {
+                    "reaction_type": {
+                        "type": "string",
+                        "enum": [
+                            "WOW", "LIT",
+                            "LOVE", "HAHA",
+                            "THUMBS-UP", "THUMBS-DOWN",
+                            "ANGRY", "SAD"
+                        ]
+                    },
+                    "count": {
+                        "type": "integer",
+                        "format": "int64"
+                    }
+                },
+                "required": [
+                    "reaction_type",
+                    "count"
+                ]
+            }
+        },
+
+        "PostReactionsResponse": {
+            "description": "Success Response",
+            "schema": {
+                "type": "array",
+                "items": {
+                    "$ref": "#/definitions/UserReaction"
+                }
+            }
+        },
+
+        "CommentRepliesResponse": {
+            "description": "Success Response",
+            "schema": {
+                "$ref": "#/definitions/Comment"
+            }
+        }
+
+    },
+
+    "paths": {
+
+        "/posts/v1/": {
+            "post": {
+                "operationId": "create_post",
+                "summary": "Create New Post",
+                "description": "Create New Post and return Post id",
+                "security": [{
+                    "oauth": [
+                        "write"
+                    ]
+                }],
+                "parameters": [{
+                    "$ref": "#/parameters/CreatePostParameter"
+                }],
+                "responses": {
+                    "201": {
+                        "$ref": "#/responses/CreatePostResponse"
+                    },
+                    "400": {
+                        "$ref": "#/responses/InvalidPostContent"
+                    }
+                }
+            }
+        },
+
+        "/posts/{post_id}/comment/v1/": {
+            "post": {
+                "operationId": "create_comment",
+                "summary": "Create New Comment",
+                "description": "Create New Comment and return Comment id",
+                "security": [{
+                    "oauth": [
+                        "read",
+                        "write"
+                    ]
+                }],
+                "parameters": [{
+                        "$ref": "#/parameters/PostIdParameter"
+                    },
+                    {
+                        "$ref": "#/parameters/CreatePostParameter"
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "$ref": "#/responses/CreateCommentResponse"
+                    },
+                    "404": {
+                        "$ref": "#/responses/InvalidPostId"
+                    },
+                    "400": {
+                        "$ref": "#/responses/InvalidCommentContent"
+                    }
+                }
+            }
+        },
+
+        "/comments/{comment_id}/reply/v1/": {
+            "post": {
+                "operationId": "create_reply_comment",
+                "summary": "Create New Reply Comment",
+                "description": "Create New Reply Comment and return Comment id",
+                "security": [{
+                    "oauth": [
+                        "read",
+                        "write"
+                    ]
+                }],
+                "parameters": [{
+                        "$ref": "#/parameters/CommentIdParameter"
+                    },
+                    {
+                        "$ref": "#/parameters/CreatePostParameter"
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "$ref": "#/responses/CreateCommentResponse"
+                    },
+                    "404": {
+                        "$ref": "#/responses/InvalidCommentId"
+                    },
+                    "400": {
+                        "$ref": "#/responses/InvalidReplyContent"
+                    }
+                }
+            }
+        },
+
+        "/posts/{post_id}/react/v1/": {
+            "post": {
+                "operationId": "create_post_reaction",
+                "summary": "Create Reation To Post",
+                "description": "Create Post's Reaction",
+                "security": [{
+                    "oauth": [
+                        "read",
+                        "write"
+                    ]
+                }],
+                "parameters": [{
+                        "$ref": "#/parameters/PostIdParameter"
+                    },
+                    {
+                        "$ref": "#/parameters/CreateReactionParameter"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Response Success"
+                    },
+                    "404": {
+                        "$ref": "#/responses/InvalidPostId"
+                    },
+                    "400": {
+                        "$ref": "#/responses/InvalidReactionType"
+                    }
+                }
+            }
+        },
+
+        "/comments/{comment_id}/react/v1/": {
+            "post": {
+                "operationId": "create_comment_reaction",
+                "summary": "Create Reation To Comment",
+                "description": "Create Comment's Reaction",
+                "security": [{
+                    "oauth": [
+                        "read",
+                        "write"
+                    ]
+                }],
+                "parameters": [{
+                        "$ref": "#/parameters/CommentIdParameter"
+                    },
+                    {
+                        "$ref": "#/parameters/CreateReactionParameter"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Response Success"
+                    },
+                    "404": {
+                        "$ref": "#/responses/InvalidCommentId"
+                    },
+                    "400": {
+                        "$ref": "#/responses/InvalidReactionType"
+                    }
+                }
+            }
+        },
+
+        "/posts/{post_id}/delete/v1/": {
+            "delete": {
+                "operationId": "delete_post",
+                "summary": "Delete Post",
+                "description": "Delete",
+                "security": [{
+                    "oauth": [
+                        "delete",
+                        "superuser"
+                    ]
+                }],
+                "parameters": [{
+                    "$ref": "#/parameters/PostIdParameter"
+                }],
+                "responses": {
+                    "200": {
+                        "description": "Response Success"
+                    },
+                    "404": {
+                        "$ref": "#/responses/InvalidPostId"
+                    },
+                    "403": {
+                        "$ref": "#/responses/UnauthorizedUser"
+                    }
+                }
+            }
+        },
+
+        "/posts/{post_id}/details/v1/": {
+            "get": {
+                "operationId": "post_details",
+                "summary": "Get Post Information",
+                "description": "Get Post",
+                "security": [{
+                    "oauth": [
+                        "superuser"
+                    ]
+                }],
+                "parameters": [{
+                    "$ref": "#/parameters/PostIdParameter"
+                }],
+                "responses": {
+                    "200": {
+                        "$ref": "#/responses/PostDetailResponse"
+                    },
+                    "404": {
+                        "$ref": "#/responses/InvalidPostId"
+                    }
+                }
+            }
+        },
+
+        "/users/posts/v1/": {
+            "get": {
+                "operationId": "user_posts_details",
+                "summary": "Get User Posts Information",
+                "description": "Get User Posts",
+                "security": [{
+                    "oauth": [
+                        "superuser"
+                    ]
+                }],
+                "parameters": [{
+                        "$ref": "#/parameters/OffsetParameter"
+                    },
+                    {
+                        "$ref": "#/parameters/LimitParameter"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "$ref": "#/responses/UserPostDetailResponse"
+                    }
+                }
+            }
+        },
+
+        "/users/react/posts/v1/": {
+            "get": {
+                "operationId": "user_reacted_posts",
+                "summary": "Get User Reacted Posts Information",
+                "description": "Get User Reacted Posts",
+                "security": [{
+                    "oauth": [
+                        "superuser"
+                    ]
+                }],
+                "responses": {
+                    "200": {
+                        "$ref": "#/responses/PostIdsResponse"
+                    }
+                }
+            }
+        },
+
+        "/reactions/count/v1/": {
+            "get": {
+                "operationId": "reactions_count",
+                "summary": "Get Total Reactions",
+                "description": "Get Total Reactions Count",
+                "security": [{
+                    "oauth": [
+                        "superuser"
+                    ]
+                }],
+                "responses": {
+                    "200": {
+                        "$ref": "#/responses/ReactionsCountResponse"
+                    }
+                }
+            }
+        },
+
+        "/posts/{post_id}/reactions/metrics/v1/": {
+            "get": {
+                "operationId": "reactions_metrics",
+                "summary": "Get Reactions Metrics",
+                "description": "Get Reactions Metrics",
+                "security": [{
+                    "oauth": [
+                        "superuser"
+                    ]
+                }],
+                "parameters": [{
+                    "$ref": "#/parameters/PostIdParameter"
+                }],
+                "responses": {
+                    "200": {
+                        "$ref": "#/responses/ReactionMetricsResponse"
+                    }
+                }
+            }
+        },
+
+        "/posts/{post_id}/reactions/v1/": {
+            "get": {
+                "operationId": "post_reactions",
+                "summary": "Get Post Reactions",
+                "description": "Get Post Reactions",
+                "security": [{
+                    "oauth": [
+                        "superuser"
+                    ]
+                }],
+                "parameters": [{
+                    "$ref": "#/parameters/PostIdParameter"
+                }],
+                "responses": {
+                    "200": {
+                        "$ref": "#/responses/PostReactionsResponse"
+                    },
+                    "404": {
+                        "$ref": "#/responses/InvalidPostId"
+                    }
+                }
+            }
+        },
+
+        "/comments/{comment_id}/replies/v1/": {
+            "get": {
+                "operationId": "comment_replies",
+                "summary": "Get Comment Replies",
+                "description": "Get Comment Replies",
+                "security": [{
+                    "oauth": [
+                        "superuser"
+                    ]
+                }],
+                "parameters": [{
+                    "$ref": "#/parameters/CommentIdParameter"
+                }],
+                "responses": {
+                    "200": {
+                        "$ref": "#/responses/CommentRepliesResponse"
+                    },
+                    "404": {
+                        "$ref": "#/responses/InvalidCommentId"
+                    }
+                }
+            }
+        },
+
+        "/posts/positive/reactions/v1/": {
+            "get": {
+                "operationId": "positive_reactions",
+                "summary": "Get Posts With More Positive Reactions",
+                "description": "Get Posts With Positive Reactions",
+                "security": [{
+                    "oauth": [
+                        "superuser"
+                    ]
+                }],
+                "responses": {
+                    "200": {
+                        "$ref": "#/responses/PostIdsResponse"
+                    }
+                }
+            }
+        }
+
+    }
+}
